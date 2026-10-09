@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nobody Took Notes</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f8fafc;
+      --fg: #1e3a5f;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --accent: #1e3a5f;
+      --recording: #dc2626;
+      --success: #16a34a;
+      --card-bg: #ffffff;
+      --gradient-start: #f0f7ff;
+      --gradient-end: #f8fafc;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --fg: #e2e8f0;
+        --muted: #94a3b8;
+        --border: #334155;
+        --accent: #60a5fa;
+        --recording: #f87171;
+        --success: #4ade80;
+        --card-bg: #1e293b;
+        --gradient-start: #1e293b;
+        --gradient-end: #0f172a;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(180deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+      color: var(--fg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--card-bg);
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+    }
+
+    .nav-tab {
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .nav-tab:hover {
+      background: var(--border);
+      color: var(--fg);
+    }
+
+    .nav-tab.active {
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .view {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+    }
+
+    .view.active {
+      display: flex;
+    }
+
+    /* Record View */
+    .record-view {
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      padding: 40px;
+    }
+
+    .record-container {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .progress-ring {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      transform: rotate(-90deg);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .progress-ring.active {
+      opacity: 1;
+    }
+
+    .progress-ring circle {
+      fill: none;
+      stroke-width: 4;
+      stroke-linecap: round;
+    }
+
+    .progress-ring .bg {
+      stroke: var(--border);
+    }
+
+    .progress-ring .fg {
+      stroke: var(--fg);
+      stroke-dasharray: 502;
+      stroke-dashoffset: 502;
+      animation: progress-spin 2s linear infinite;
+    }
+
+    @keyframes progress-spin {
+      0% { stroke-dashoffset: 502; transform: rotate(0deg); }
+      50% { stroke-dashoffset: 125; }
+      100% { stroke-dashoffset: 502; transform: rotate(360deg); }
+    }
+
+    .record-btn {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      border: 4px solid var(--fg);
+      background: var(--bg);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      position: relative;
+      z-index: 1;
+    }
+
+    .record-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .record-btn:active {
+      transform: scale(0.98);
+    }
+
+    .record-btn.recording {
+      border-color: var(--recording);
+      animation: pulse-border 1.5s infinite;
+    }
+
+    .record-btn.processing {
+      border-color: var(--border);
+      cursor: default;
+      pointer-events: none;
+    }
+
+    @keyframes pulse-border {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(220, 0, 0, 0.4); }
+      50% { box-shadow: 0 0 0 20px rgba(220, 0, 0, 0); }
+    }
+
+    .record-icon {
+      width: 60px;
+      height: 60px;
+      background: var(--fg);
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .record-btn.recording .record-icon {
+      background: var(--recording);
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+    }
+
+    .record-btn.processing .record-icon {
+      width: 24px;
+      height: 24px;
+      background: transparent;
+      border: 3px solid var(--border);
+      border-top-color: var(--fg);
+      animation: spin 0.8s linear infinite;
+    }
+
+    .record-label {
+      font-size: 16px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .record-timer {
+      font-size: 48px;
+      font-weight: 300;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -1px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Meetings View */
+    .meetings-view {
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .meetings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .meetings-title {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .meeting-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .meeting-card {
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: var(--card-bg);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .meeting-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 12px rgba(30, 58, 95, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .meeting-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .meeting-card-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .meeting-card-date {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .meeting-card-tldr {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .empty-meetings {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+
+    .empty-meetings p {
+      margin-bottom: 8px;
+    }
+
+    /* Meeting Detail View */
+    .detail-view {
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      gap: 16px;
+    }
+
+    .detail-title-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .detail-title {
+      font-size: 28px;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      color: var(--fg);
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      font-family: inherit;
+    }
+
+    .detail-title:focus {
+      outline: none;
+      border-bottom: 2px solid var(--fg);
+    }
+
+    .detail-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .btn {
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--fg);
+      cursor: pointer;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    .btn-back {
+      padding: 8px 12px;
+    }
+
+    .detail-meta {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .audio-player {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .audio-player audio {
+      height: 32px;
+    }
+
+    .detail-tldr {
+      font-size: 17px;
+      line-height: 1.6;
+      padding: 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      margin-bottom: 32px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .detail-section {
+      margin-bottom: 28px;
+    }
+
+    .detail-section h2 {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .detail-list {
+      list-style: none;
+    }
+
+    .detail-list li {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .detail-list li:last-child {
+      border-bottom: none;
+    }
+
+    .action-item-meta {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .detail-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+    }
+
+    .detail-tab {
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .detail-tab:hover {
+      border-color: var(--accent);
+      color: var(--fg);
+    }
+
+    .detail-tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    .detail-content {
+      display: none;
+    }
+
+    .detail-content.active {
+      display: block;
+    }
+
+    .transcript-segment {
+      margin-bottom: 16px;
+    }
+
+    .transcript-speaker {
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .transcript-speaker.me { color: var(--accent); }
+    .transcript-speaker.them { color: var(--muted); }
+
+    .transcript-text {
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--accent);
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.2s ease;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(30, 58, 95, 0.2);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Nobody Took Notes</h1>
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-view="record">Record</button>
+      <button class="nav-tab" data-view="meetings">Meetings</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Record View -->
+    <div class="view record-view active" id="recordView">
+      <div class="record-timer" id="timer">00:00</div>
+      <div class="record-container">
+        <svg class="progress-ring" id="progressRing" viewBox="0 0 180 180">
+          <circle class="bg" cx="90" cy="90" r="80"/>
+          <circle class="fg" cx="90" cy="90" r="80"/>
+        </svg>
+        <button class="record-btn" id="recordBtn">
+          <div class="record-icon"></div>
+        </button>
+      </div>
+      <div class="record-label" id="recordLabel">Click to start recording</div>
+    </div>
+
+    <!-- Meetings View -->
+    <div class="view meetings-view" id="meetingsView">
+      <div class="meetings-header">
+        <h2 class="meetings-title">Meetings</h2>
+      </div>
+      <div class="meeting-list" id="meetingList">
+        <div class="empty-meetings" id="emptyMeetings">
+          <p>No meetings yet</p>
+          <p>Record your first meeting to get started</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Meeting Detail View -->
+    <div class="view detail-view" id="detailView">
+      <div class="detail-header">
+        <div>
+          <button class="btn btn-back" id="backBtn">&larr; Back</button>
+        </div>
+        <div class="detail-title-wrap">
+          <input type="text" class="detail-title" id="detailTitle" value="Meeting Title">
+        </div>
+        <div class="detail-actions">
+          <button class="btn" id="copyBtn">Copy</button>
+          <button class="btn" id="exportBtn">Export</button>
+        </div>
+      </div>
+      <div class="detail-meta" id="detailMeta">
+        <span id="detailDate"></span>
+        <div class="audio-player" id="audioPlayer" hidden>
+          <audio controls id="audioElement"></audio>
+        </div>
+      </div>
+      <div class="detail-tabs">
+        <button class="detail-tab active" data-content="summary">Summary</button>
+        <button class="detail-tab" data-content="transcript">Transcript</button>
+      </div>
+      <div class="detail-content active" id="summaryContent"></div>
+      <div class="detail-content" id="transcriptContent"></div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const recordBtn = document.getElementById('recordBtn');
+    const recordLabel = document.getElementById('recordLabel');
+    const timer = document.getElementById('timer');
+    const progressRing = document.getElementById('progressRing');
+    const meetingList = document.getElementById('meetingList');
+    const emptyMeetings = document.getElementById('emptyMeetings');
+    const toast = document.getElementById('toast');
+    const detailTitle = document.getElementById('detailTitle');
+
+    const recordView = document.getElementById('recordView');
+    const meetingsView = document.getElementById('meetingsView');
+    const detailView = document.getElementById('detailView');
+
+    let recording = false;
+    let processing = false;
+    let timerInterval = null;
+    let startTime = null;
+    let currentSessionId = null;
+    let titleSaveTimeout = null;
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function switchView(viewName) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+
+      if (viewName === 'record') {
+        recordView.classList.add('active');
+        document.querySelector('[data-view="record"]').classList.add('active');
+      } else if (viewName === 'meetings') {
+        meetingsView.classList.add('active');
+        document.querySelector('[data-view="meetings"]').classList.add('active');
+        loadMeetings();
+      } else if (viewName === 'detail') {
+        detailView.classList.add('active');
+      }
+    }
+
+    function formatTimer(ms) {
+      const mins = Math.floor(ms / 60000);
+      const secs = Math.floor((ms % 60000) / 1000);
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function formatDate(dateStr) {
+      const d = new Date(dateStr);
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+
+      const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      if (d.toDateString() === today.toDateString()) {
+        return `Today at ${time}`;
+      }
+      if (d.toDateString() === yesterday.toDateString()) {
+        return `Yesterday at ${time}`;
+      }
+      return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ` at ${time}`;
+    }
+
+    function formatDuration(ms) {
+      if (!ms) return '';
+      const mins = Math.floor(ms / 60000);
+      const secs = Math.floor((ms % 60000) / 1000);
+      if (mins > 0) return `${mins}m ${secs}s`;
+      return `${secs}s`;
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function setProcessing(isProcessing, label) {
+      processing = isProcessing;
+      if (isProcessing) {
+        recordBtn.classList.add('processing');
+        recordBtn.classList.remove('recording');
+        progressRing.classList.add('active');
+        recordLabel.textContent = label || 'Processing...';
+      } else {
+        recordBtn.classList.remove('processing');
+        progressRing.classList.remove('active');
+        recordLabel.textContent = 'Click to start recording';
+      }
+    }
+
+    async function startRecording() {
+      try {
+        const res = await fetch('/api/start', { method: 'POST' });
+        const data = await res.json();
+        if (data.recording) {
+          recording = true;
+          currentSessionId = data.session_id;
+          recordBtn.classList.add('recording');
+          recordLabel.textContent = 'Click to stop recording';
+          startTime = Date.now();
+          timerInterval = setInterval(() => {
+            timer.textContent = formatTimer(Date.now() - startTime);
+          }, 100);
+        }
+      } catch (err) {
+        showToast('Failed to start recording');
+      }
+    }
+
+    async function stopRecording() {
+      clearInterval(timerInterval);
+      recording = false;
+      setProcessing(true, 'Stopping recording...');
+
+      try {
+        const res = await fetch('/api/stop', { method: 'POST' });
+        const data = await res.json();
+        const sessionId = data.session_id || currentSessionId;
+
+        if (sessionId) {
+          setProcessing(true, 'Generating summary...');
+
+          await fetch(`/api/sessions/${sessionId}/summarize`, { method: 'POST' });
+
+          showToast('Meeting processed');
+          resetRecordView();
+          loadMeetingDetail(sessionId);
+        } else {
+          showToast('No audio recorded');
+          resetRecordView();
+        }
+      } catch (err) {
+        showToast('Processing failed');
+        resetRecordView();
+      }
+    }
+
+    function resetRecordView() {
+      timer.textContent = '00:00';
+      setProcessing(false);
+    }
+
+    recordBtn.addEventListener('click', () => {
+      if (processing) return;
+      if (recording) {
+        stopRecording();
+      } else {
+        startRecording();
+      }
+    });
+
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+      tab.addEventListener('click', () => switchView(tab.dataset.view));
+    });
+
+    async function loadMeetings() {
+      try {
+        const res = await fetch('/api/sessions');
+        const sessions = await res.json();
+
+        if (sessions.length === 0) {
+          emptyMeetings.style.display = 'block';
+          meetingList.innerHTML = '';
+          meetingList.appendChild(emptyMeetings);
+          return;
+        }
+
+        emptyMeetings.style.display = 'none';
+        meetingList.innerHTML = '';
+
+        for (const session of sessions) {
+          let title = 'Untitled Meeting';
+          let tldr = '';
+
+          try {
+            const summaryRes = await fetch(`/api/sessions/${session.id}/summary`);
+            if (summaryRes.ok) {
+              const summary = await summaryRes.json();
+              if (summary && summary.title) {
+                title = summary.title;
+                tldr = summary.tldr || '';
+              }
+            }
+          } catch (e) {}
+
+          const card = document.createElement('div');
+          card.className = 'meeting-card';
+          card.innerHTML = `
+            <div class="meeting-card-header">
+              <div class="meeting-card-title">${escapeHtml(title)}</div>
+              <div class="meeting-card-date">${formatDate(session.created_at)}</div>
+            </div>
+            ${tldr ? `<div class="meeting-card-tldr">${escapeHtml(tldr)}</div>` : ''}
+          `;
+          card.addEventListener('click', () => loadMeetingDetail(session.id));
+          meetingList.appendChild(card);
+        }
+      } catch (err) {
+        showToast('Failed to load meetings');
+      }
+    }
+
+    async function loadMeetingDetail(sessionId) {
+      currentSessionId = sessionId;
+      switchView('detail');
+
+      const detailDate = document.getElementById('detailDate');
+      const summaryContent = document.getElementById('summaryContent');
+      const transcriptContent = document.getElementById('transcriptContent');
+      const audioPlayer = document.getElementById('audioPlayer');
+      const audioElement = document.getElementById('audioElement');
+
+      detailTitle.value = 'Loading...';
+      summaryContent.innerHTML = '';
+      transcriptContent.innerHTML = '';
+      audioPlayer.hidden = true;
+
+      try {
+        const sessionsRes = await fetch('/api/sessions');
+        const sessions = await sessionsRes.json();
+        const session = sessions.find(s => s.id === sessionId || s.id.startsWith(sessionId));
+
+        if (session) {
+          detailDate.textContent = `${formatDate(session.created_at)} · ${formatDuration(session.duration_ms)}`;
+        }
+
+        const summaryRes = await fetch(`/api/sessions/${sessionId}/summary`);
+        if (summaryRes.ok) {
+          const summary = await summaryRes.json();
+          if (summary && summary.title) {
+            detailTitle.value = summary.title;
+            renderSummary(summary);
+          } else {
+            detailTitle.value = 'Untitled Meeting';
+            summaryContent.innerHTML = '<p>No summary available</p>';
+          }
+        }
+
+        const transcriptRes = await fetch(`/api/sessions/${sessionId}`);
+        const segments = await transcriptRes.json();
+        renderTranscript(segments);
+
+        // Check for audio
+        try {
+          const audioRes = await fetch(`/api/sessions/${sessionId}/audio`);
+          if (audioRes.ok) {
+            const audioData = await audioRes.json();
+            if (audioData.url) {
+              audioElement.src = audioData.url;
+              audioPlayer.hidden = false;
+            }
+          }
+        } catch (e) {}
+
+      } catch (err) {
+        showToast('Failed to load meeting');
+      }
+    }
+
+    // Save title on change
+    detailTitle.addEventListener('input', () => {
+      clearTimeout(titleSaveTimeout);
+      titleSaveTimeout = setTimeout(async () => {
+        if (!currentSessionId) return;
+        try {
+          await fetch(`/api/sessions/${currentSessionId}/title`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: detailTitle.value })
+          });
+          showToast('Title saved');
+        } catch (err) {
+          showToast('Failed to save title');
+        }
+      }, 500);
+    });
+
+    function renderSummary(summary) {
+      const summaryContent = document.getElementById('summaryContent');
+      let html = '';
+
+      if (summary.tldr) {
+        html += `<div class="detail-tldr">${escapeHtml(summary.tldr)}</div>`;
+      }
+
+      if (summary.key_points && summary.key_points.length > 0) {
+        html += `<div class="detail-section"><h2>Key Points</h2><ul class="detail-list">`;
+        for (const point of summary.key_points) {
+          html += `<li>${escapeHtml(point)}</li>`;
+        }
+        html += `</ul></div>`;
+      }
+
+      if (summary.decisions && summary.decisions.length > 0) {
+        html += `<div class="detail-section"><h2>Decisions</h2><ul class="detail-list">`;
+        for (const decision of summary.decisions) {
+          html += `<li>${escapeHtml(decision)}</li>`;
+        }
+        html += `</ul></div>`;
+      }
+
+      if (summary.action_items && summary.action_items.length > 0) {
+        html += `<div class="detail-section"><h2>Action Items</h2><ul class="detail-list">`;
+        for (const item of summary.action_items) {
+          let meta = [];
+          if (item.owner) meta.push(`Owner: ${escapeHtml(item.owner)}`);
+          if (item.due) meta.push(`Due: ${escapeHtml(item.due)}`);
+          html += `<li>
+            <div>${escapeHtml(item.task)}</div>
+            ${meta.length ? `<div class="action-item-meta">${meta.join(' · ')}</div>` : ''}
+          </li>`;
+        }
+        html += `</ul></div>`;
+      }
+
+      if (summary.open_questions && summary.open_questions.length > 0) {
+        html += `<div class="detail-section"><h2>Open Questions</h2><ul class="detail-list">`;
+        for (const q of summary.open_questions) {
+          html += `<li>${escapeHtml(q)}</li>`;
+        }
+        html += `</ul></div>`;
+      }
+
+      summaryContent.innerHTML = html || '<p>No summary content</p>';
+    }
+
+    function renderTranscript(segments) {
+      const transcriptContent = document.getElementById('transcriptContent');
+      if (!segments || segments.length === 0) {
+        transcriptContent.innerHTML = '<p>No transcript available</p>';
+        return;
+      }
+
+      let html = '';
+      for (const seg of segments) {
+        const speaker = seg.source === 'me' ? 'Host' : 'Guests';
+        html += `
+          <div class="transcript-segment">
+            <div class="transcript-speaker ${seg.source}">${speaker}</div>
+            <div class="transcript-text">${escapeHtml(seg.text)}</div>
+          </div>
+        `;
+      }
+      transcriptContent.innerHTML = html;
+    }
+
+    document.querySelectorAll('.detail-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.detail-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.content + 'Content').classList.add('active');
+      });
+    });
+
+    document.getElementById('backBtn').addEventListener('click', () => {
+      switchView('meetings');
+    });
+
+    document.getElementById('copyBtn').addEventListener('click', async () => {
+      if (!currentSessionId) return;
+      try {
+        const res = await fetch(`/api/sessions/${currentSessionId}/export`);
+        const data = await res.json();
+        await navigator.clipboard.writeText(data.markdown);
+        showToast('Copied to clipboard');
+      } catch (err) {
+        showToast('Failed to copy');
+      }
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', async () => {
+      if (!currentSessionId) return;
+      try {
+        const res = await fetch(`/api/sessions/${currentSessionId}/export`);
+        const data = await res.json();
+
+        const blob = new Blob([data.markdown], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `meeting-${currentSessionId.slice(0, 8)}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showToast('Downloaded');
+      } catch (err) {
+        showToast('Failed to export');
+      }
+    });
+
+    async function checkStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        if (data.recording) {
+          recording = true;
+          currentSessionId = data.session_id;
+          recordBtn.classList.add('recording');
+          recordLabel.textContent = 'Click to stop recording';
+          startTime = Date.now();
+          timerInterval = setInterval(() => {
+            timer.textContent = formatTimer(Date.now() - startTime);
+          }, 100);
+        }
+      } catch (e) {}
+    }
+
+    checkStatus();
+  </script>
+</body>
+</html>

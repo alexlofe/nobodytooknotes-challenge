@@ -1,0 +1,27 @@
+[project]
+name = "nobody-took-notes"
+version = "0.1.0"
+description = "A free, fully local meeting notetaker"
+requires-python = ">=3.11"
+dependencies = [
+    "nobodywho",
+    "numpy",
+    "sounddevice",
+]
+
+[project.optional-dependencies]
+macos = ["catap"]
+windows = ["PyAudioWPatch"]
+linux = ["soundcard"]
+server = ["fastapi", "uvicorn[standard]", "pystray", "pillow", "pynput"]
+build = ["pyinstaller"]
+
+[project.scripts]
+nobody = "nobody.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["nobody"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

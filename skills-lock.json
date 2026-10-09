@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "nobodywho": {
+      "source": "nobodywho-ooo/nobodywho",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/nobodywho/SKILL.md",
+      "computedHash": "d25ba299ecd2fe7ad6ca98aa8fa35c30c8788dac4b0458ec49447104a64af326"
+    }
+  }
+}

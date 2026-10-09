@@ -1,0 +1,12 @@
+.venv
+nobody-took-notes-plan.md
+__pycache__/
+*.pyc
+*.db
+build/
+dist/
+# files students create while doing CHALLENGE.md
+test_audio/
+experiment.py
+test_summary.py
+*.wav
