@@ -2,9 +2,9 @@
 
 Welcome. In this challenge you will add local AI to a real desktop app.
 
-**Nobody Took Notes** is a meeting notetaker for macOS. It records a call,
-writes down what everyone says, and then writes a summary. Everything runs on
-your own computer. No cloud, no account, no data leaves your Mac.
+**Nobody Took Notes** is a meeting notetaker for macOS and Windows. It records
+a call, writes down what everyone says, and then writes a summary. Everything
+runs on your own computer. No cloud, no account, no data leaves your machine.
 
 The app in this repository is almost complete. The user interface, the audio
 recording, the database and the web server all work. **The AI parts are
@@ -47,15 +47,30 @@ found a part that is still missing.
 
 ## Before you start
 
+You can do the challenge on a Mac or on a Windows PC. The steps are the same.
+Where a command is different, this guide shows both versions.
+
 You need:
 
-- A Mac with **macOS 14.2 or newer**. (The app uses a macOS feature to record
-  system audio.)
-- **Python 3.11 or newer.** Check with `python3 --version`.
-- **Homebrew** and **ffmpeg**. Install ffmpeg with `brew install ffmpeg`.
+- One of these computers:
+  - **Mac:** Apple Silicon (M1 or newer) with **macOS 14.2 or newer**. The app
+    uses a macOS 14.2 feature to record system audio. Intel Macs are not
+    supported by NobodyWho.
+  - **Windows:** Windows 10 or 11 on a normal **x64** PC. Windows on ARM
+    (for example Snapdragon laptops) is not supported by NobodyWho yet.
+- **Python 3.11 or newer.** Check with `python3 --version` (Mac) or
+  `py --version` (Windows). On Windows, get Python from
+  [python.org](https://www.python.org/downloads/) and tick
+  **"Add python.exe to PATH"** in the installer.
+- **ffmpeg** (used to export the meeting audio as MP3):
+  - Mac: `brew install ffmpeg` (needs [Homebrew](https://brew.sh)).
+  - Windows: `winget install ffmpeg`, then open a new terminal.
 - About **1 GB of free disk space** for the two AI models.
 - An internet connection for the first run. After the models are downloaded,
   the app works offline.
+
+On Windows, use **PowerShell** (or Windows Terminal) for every command in this
+guide.
 
 ---
 
@@ -64,13 +79,39 @@ You need:
 **Goal:** run the app and see the user interface, even though the AI parts do
 not work yet.
 
-Open a terminal in this folder and run:
+Open a terminal in this folder and create a virtual environment.
+
+**Mac:**
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e ".[macos,server]"
 ```
+
+**Windows (PowerShell):**
+
+```powershell
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+If PowerShell says that running scripts is disabled, run this once and try
+again:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+Then install the app. This command is the same on both systems. It picks the
+right audio library for your computer automatically:
+
+```bash
+pip install -e ".[server]"
+```
+
+From now on, every command is the same on Mac and Windows, as long as the
+virtual environment is active. You see `(.venv)` at the start of the prompt
+when it is. If you open a new terminal, activate it again.
 
 Now start the app:
 
@@ -78,13 +119,21 @@ Now start the app:
 python -m nobody serve
 ```
 
-A small icon appears in the menu bar at the top of your screen. Your browser
-opens the app at `http://127.0.0.1:8765`.
+A small icon appears:
+
+- **Mac:** in the menu bar at the top of your screen.
+- **Windows:** in the system tray, at the bottom right of the taskbar. If you
+  do not see it, click the small `^` arrow to show hidden icons.
+
+Your browser opens the app at `http://127.0.0.1:8765`.
 
 Try it:
 
-1. Click the menu bar icon and choose **Start Recording**. macOS will ask for
-   microphone and screen recording permissions. Allow both.
+1. Click the icon and choose **Start Recording**.
+   - Mac: macOS asks for microphone and screen recording permissions. Allow
+     both.
+   - Windows: you normally see no prompt. If the microphone does not work, see
+     [Common problems](#common-problems).
 2. Talk for a few seconds.
 3. Choose **Stop Recording**.
 
@@ -226,11 +275,13 @@ python -m nobody show <first letters of the session id>
 ```
 
 **Checkpoint 2 (web interface):** run `python -m nobody serve`, start a
-recording from the menu bar, and watch the transcript appear live in the
-browser.
+recording from the menu bar (Mac) or system tray (Windows) icon, and watch the
+transcript appear live in the browser.
 
-Tip: to test the "other side" of a call, play a video or a podcast on your Mac
-while recording. Those words should appear as **Guests**.
+Tip: to test the "other side" of a call, play a video or a podcast on your
+computer while recording. Those words should appear as **Guests**. Use
+headphones or speakers that your computer plays sound through by default. On
+Windows, the app records whatever goes to the default playback device.
 
 ---
 
@@ -349,8 +400,11 @@ python -m nobody setup
 ```
 
 You should see both models reported as **ready**. If you delete the model
-cache first, you will also see the progress bar. The cache folder is
-`~/Library/Caches/nobodywho` on macOS.
+cache first, you will also see the progress bar. The cache folder is:
+
+- Mac: `~/Library/Caches/nobodywho`
+- Windows: a `nobodywho` folder inside `%LOCALAPPDATA%`. Type
+  `%LOCALAPPDATA%` in the File Explorer address bar to open it.
 
 <details>
 <summary>Extra help if you are stuck</summary>
@@ -370,7 +424,8 @@ python -m nobody setup
 python -m nobody serve
 ```
 
-1. Start a recording from the menu bar (or press `Cmd+Shift+R`).
+1. Start a recording from the icon (or press `Cmd+Shift+R` on Mac,
+   `Ctrl+Shift+R` on Windows).
 2. Play a short video and talk over it.
 3. Stop the recording.
 4. In the browser: read the live transcript, wait for the summary, edit the
@@ -394,8 +449,11 @@ If you want to continue, here are some ideas. Pick any that interest you.
   still writing it, instead of waiting for the end.
 - **Speaker names.** Ask the user for the names of the people in the call and
   use them instead of "Host" and "Guests".
-- **Build the app.** Run `python build.py` to make a standalone macOS app, and
-  `python build_dmg.py` to make an installer.
+- **Build the app (Mac only).** Run `python build.py` to make a standalone
+  macOS app, and `python build_dmg.py` to make an installer.
+- **Linux support.** The app records audio through one small file per
+  platform in `nobody/capture/`. Look at `macos.py` and `windows.py`, then
+  write `linux.py` and add it to `get_sources()` in `nobody/capture/__init__.py`.
 
 ## Common problems
 
@@ -413,12 +471,36 @@ schema sampler to the `Chat`. Without it, the model writes normal text.
 **The summary is empty or strange.**
 Small models make mistakes. Try a longer transcript, or a bigger model.
 
-**No audio is captured.**
+**No audio is captured (Mac).**
 Check System Settings, Privacy & Security. The terminal app (or the built app)
-needs Microphone and Screen Recording permission.
+needs Microphone and Screen Recording permission. Restart the terminal after
+you change a permission.
+
+**The microphone does not work (Windows).**
+Open Settings, Privacy & security, Microphone. Turn on **Microphone access**
+and **Let desktop apps access your microphone**. Also check that the right
+microphone is the default input in Settings, System, Sound.
+
+**The "Guests" side is empty (Windows).**
+The app records the default playback device. Check in Settings, System, Sound
+that your speakers or headphones are the default output, and that something is
+actually playing.
+
+**`Activate.ps1 cannot be loaded because running scripts is disabled` (Windows).**
+Run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, then activate
+the virtual environment again.
+
+**`python` or `py` is not found (Windows).**
+Install Python from python.org and tick **"Add python.exe to PATH"**. Open a
+new terminal afterwards.
+
+**I cannot find the app icon (Windows).**
+Click the `^` arrow at the bottom right of the taskbar. The icon is often
+hidden there.
 
 **`ffmpeg not found`.**
-Run `brew install ffmpeg`.
+Mac: run `brew install ffmpeg`. Windows: run `winget install ffmpeg`, then
+open a new terminal so it is on the PATH.
 
 ## Small glossary
 

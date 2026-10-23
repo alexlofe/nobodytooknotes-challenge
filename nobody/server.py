@@ -138,7 +138,7 @@ async def start_recording() -> StatusResponse:
 
     ensure_db_dir()
     AUDIO_DIR.mkdir(parents=True, exist_ok=True)
-    from nobody.capture.macos import MicSource, LoopbackSource
+    from nobody.capture import get_sources
 
     state.store = TranscriptStore(DEFAULT_DB)
     state.session_id = state.store.create_session()
@@ -159,8 +159,7 @@ async def start_recording() -> StatusResponse:
     mic_seg = state.pipeline.create_segmenter("me", sample_rate=48000)
     them_seg = state.pipeline.create_segmenter("them", sample_rate=48000)
 
-    state.mic = MicSource()
-    state.loopback = LoopbackSource()
+    state.mic, state.loopback = get_sources()
 
     def on_mic(pcm: bytes, ts: int) -> None:
         mic_seg.push(pcm, ts)

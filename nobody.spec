@@ -29,6 +29,7 @@ a = Analysis(
         'nobody',
         'nobody.capture',
         'nobody.capture.macos',
+        'nobody.capture.mic',
         'nobody.stt',
         'nobody.summarise',
         'nobody.store',

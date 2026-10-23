@@ -9,7 +9,7 @@ from pathlib import Path
 
 def cmd_live(args):
     """Live transcription of mic + system audio."""
-    from nobody.capture.macos import MicSource, LoopbackSource
+    from nobody.capture import get_sources
     from nobody.pipeline import LivePipeline, TranscriptResult
     from nobody.store import TranscriptStore
     from nobody.stt import DEFAULT_MODEL
@@ -44,8 +44,7 @@ def cmd_live(args):
     mic_seg = pipeline.create_segmenter("me", sample_rate=48000)
     them_seg = pipeline.create_segmenter("them", sample_rate=48000)
 
-    mic = MicSource()
-    loopback = LoopbackSource()
+    mic, loopback = get_sources()
 
     pipeline.start()
     mic.start(lambda pcm, ts: mic_seg.push(pcm, ts))
@@ -181,7 +180,7 @@ def cmd_summarize(args):
 
 def cmd_record(args):
     """Record audio from mic and system loopback."""
-    from nobody.capture.macos import MicSource, LoopbackSource
+    from nobody.capture import get_sources
 
     duration = args.duration
     out_dir = Path(args.output)
@@ -199,8 +198,7 @@ def cmd_record(args):
     def on_loopback(pcm: bytes, ts: int) -> None:
         them_chunks.append(pcm)
 
-    mic = MicSource()
-    loopback = LoopbackSource()
+    mic, loopback = get_sources()
 
     print(f"Recording {duration}s...")
     print("  Mic → me.wav")
@@ -379,7 +377,8 @@ def main():
     # serve command
     p_serve = subparsers.add_parser("serve", help="Run the UI server with tray icon")
     p_serve.add_argument("--port", "-p", type=int, default=8765, help="Server port (default: 8765)")
-    p_serve.add_argument("--hotkey", default="<cmd>+<shift>+r", help="Global hotkey (default: Cmd+Shift+R)")
+    default_hotkey = "<cmd>+<shift>+r" if sys.platform == "darwin" else "<ctrl>+<shift>+r"
+    p_serve.add_argument("--hotkey", default=default_hotkey, help="Global hotkey (default: Cmd+Shift+R on macOS, Ctrl+Shift+R elsewhere)")
     p_serve.add_argument("--no-browser", action="store_true", help="Don't open browser on start")
     p_serve.set_defaults(func=cmd_serve)
 

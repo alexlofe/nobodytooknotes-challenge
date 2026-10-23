@@ -7,6 +7,9 @@ dependencies = [
     "nobodywho",
     "numpy",
     "sounddevice",
+    # System audio capture, picked automatically per platform
+    "catap; sys_platform == 'darwin'",
+    "PyAudioWPatch; sys_platform == 'win32'",
 ]
 
 [project.optional-dependencies]

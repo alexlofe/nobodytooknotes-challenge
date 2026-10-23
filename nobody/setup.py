@@ -21,6 +21,15 @@ def check_ffmpeg() -> bool:
     return shutil.which("ffmpeg") is not None
 
 
+def ffmpeg_install_hint() -> str:
+    """Return the command that installs ffmpeg on this platform."""
+    if sys.platform == "darwin":
+        return "brew install ffmpeg"
+    if sys.platform == "win32":
+        return "winget install ffmpeg"
+    return "your package manager, e.g. sudo apt install ffmpeg"
+
+
 def check_macos_permissions() -> dict[str, bool | None]:
     """Check macOS permissions. Returns dict with permission status."""
     if sys.platform != "darwin":
@@ -168,7 +177,7 @@ def run_setup_cli(verbose: bool = True) -> bool:
         print("  ✓ ffmpeg found")
     else:
         print("  ✗ ffmpeg not found")
-        print("    Install with: brew install ffmpeg")
+        print(f"    Install with: {ffmpeg_install_hint()}")
         all_ok = False
     print()
 
